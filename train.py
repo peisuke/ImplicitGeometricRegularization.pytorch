@@ -14,7 +14,7 @@ from network import Network
 
 def generate_data(nb_data=128, noise=0.0):
     t = 2 * np.random.rand(nb_data) * np.pi
-    r = 1.0 + 0.3 * np.cos(3 * t) + np.random.randn(nb_data) * noise
+    r = 1.0 + np.random.randn(nb_data) * noise
     pts = np.stack((r * np.cos(t), r * np.sin(t)), axis=1)
     return pts
 
@@ -59,7 +59,7 @@ def train(net, optimizer, data_loader, device):
     total_loss /= total_count
     return total_loss
 
-def predict(centers, device, threshold=0.3):
+def predict(centers, device, threshold=0.4):
     x = np.linspace(-1.5, 1.5, 160)
     y = np.linspace(-1.5, 1.5, 160)
     X, Y = np.meshgrid(x, y)
@@ -68,8 +68,8 @@ def predict(centers, device, threshold=0.3):
     Y = Y.reshape(-1)
     pts = np.stack((X, Y), axis=1)
 
-    #mat = spatial.distance_matrix(pts, centers)
-    #pts = pts[mat.min(axis=1) < threshold]
+    mat = spatial.distance_matrix(pts, centers)
+    pts = pts[mat.min(axis=1) < threshold]
     
     net.eval()
     val = net(torch.Tensor(pts))
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    x = generate_data(nb_data=128)
+    x = generate_data(nb_data=128, noise=0.01)
     dataset = Dataset(x)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     
