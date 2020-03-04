@@ -1,5 +1,6 @@
 import random
 import numpy as np
+from scipy import spatial
 
 import torch
 import torch.autograd as autograd
@@ -11,12 +12,18 @@ import matplotlib.cm as cm
 from dataset import Dataset
 from network import Network
 
-def generate_data(nb_data=128):
+def generate_data(nb_data=128, noise=0.0):
     t = 2 * np.random.rand(nb_data) * np.pi
-    pts = np.stack((np.cos(t), np.sin(t)), axis=1)
+    r = 1.0 + 0.3 * np.cos(3 * t) + np.random.randn(nb_data) * noise
+    pts = np.stack((r * np.cos(t), r * np.sin(t)), axis=1)
     return pts
 
-def train(net, optimizer, data_loader):
+def sample_fake(pts, noise=0.3):
+    sampled = pts.detach().numpy()
+    sampled += np.random.randn(*sampled.shape) * noise
+    return sampled
+
+def train(net, optimizer, data_loader, device):
     net.train()
 
     total_loss = 0
@@ -25,15 +32,19 @@ def train(net, optimizer, data_loader):
         batchsize = batch.shape[0]
         
         net.zero_grad()
+       
+        fake = torch.Tensor(sample_fake(batch, 0.1))
+        #fake = torch.randn(batch.shape) * 4 - 2
 
+        batch = batch.to(device)
         y = net(batch)
         loss_pts = (y ** 2).sum()
         
-        fake = torch.randn(batch.shape) * 4 - 2
         xv = autograd.Variable(fake, requires_grad=True)
+        xv.to(device)
         f = net(xv)
         g = autograd.grad(outputs=f, inputs=xv,
-                        grad_outputs=torch.ones(f.size()),
+                        grad_outputs=torch.ones(f.size()).to(device),
                         create_graph=True, retain_graph=True, only_inputs=True)[0]
         eikonal_term = ((g.norm(2, dim=1) - 1) ** 2).mean()
         
@@ -48,14 +59,17 @@ def train(net, optimizer, data_loader):
     total_loss /= total_count
     return total_loss
 
-def predict():
-    x = np.linspace(-1.5, 1.5, 30)
-    y = np.linspace(-1.5, 1.5, 30)
+def predict(centers, device, threshold=0.3):
+    x = np.linspace(-1.5, 1.5, 160)
+    y = np.linspace(-1.5, 1.5, 160)
     X, Y = np.meshgrid(x, y)
     
     X = X.reshape(-1)
     Y = Y.reshape(-1)
     pts = np.stack((X, Y), axis=1)
+
+    #mat = spatial.distance_matrix(pts, centers)
+    #pts = pts[mat.min(axis=1) < threshold]
     
     net.eval()
     val = net(torch.Tensor(pts))
@@ -74,22 +88,27 @@ def plot_data(x, y, v):
     plt.subplot(1,2,2)
     plt.xlim([-1.5, 1.5])
     plt.ylim([-1.5, 1.5])
-    plt.scatter(y[:,0], y[:,1], c=v, cmap=cm.seismic)
+    plt.scatter(y[:,0], y[:,1], c=v, cmap=cm.seismic, vmin=-0.5, vmax=0.5, s=2)
     plt.show()
 
 if __name__ == '__main__':
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+
     x = generate_data(nb_data=128)
     dataset = Dataset(x)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     
     net = Network()
+    net.to(device)
+
     optimizer = optim.Adam(net.parameters())
 
     for itr in range(1000):
-        loss = train(net, optimizer, data_loader)
+        loss = train(net, optimizer, data_loader, device)
         if itr % 100 == 0:
             print(loss)
 
-    y, v = predict()
+    y, v = predict(x, device)
     
     plot_data(x, y, v)
