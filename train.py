@@ -41,7 +41,7 @@ def train(net, optimizer, data_loader, device):
         loss_pts = (y ** 2).sum()
         
         xv = autograd.Variable(fake, requires_grad=True)
-        xv.to(device)
+        xv = xv.to(device)
         f = net(xv)
         g = autograd.grad(outputs=f, inputs=xv,
                         grad_outputs=torch.ones(f.size()).to(device),
@@ -60,8 +60,8 @@ def train(net, optimizer, data_loader, device):
     return total_loss
 
 def predict(centers, device, threshold=0.4):
-    x = np.linspace(-1.5, 1.5, 160)
-    y = np.linspace(-1.5, 1.5, 160)
+    x = np.linspace(-1.5, 1.5, 40)
+    y = np.linspace(-1.5, 1.5, 40)
     X, Y = np.meshgrid(x, y)
     
     X = X.reshape(-1)
@@ -88,7 +88,7 @@ def plot_data(x, y, v):
     plt.subplot(1,2,2)
     plt.xlim([-1.5, 1.5])
     plt.ylim([-1.5, 1.5])
-    plt.scatter(y[:,0], y[:,1], c=v, cmap=cm.seismic, vmin=-0.5, vmax=0.5, s=2)
+    plt.scatter(y[:,0], y[:,1], c=v, cmap=cm.seismic, vmin=-0.5, vmax=0.5)
     plt.show()
 
 if __name__ == '__main__':
