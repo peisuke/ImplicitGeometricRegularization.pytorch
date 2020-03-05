@@ -74,6 +74,12 @@ if __name__ == '__main__':
     device = torch.device("cuda" if use_cuda else "cpu")
 
     x = generate_data(nb_data=2048, noise=0.01)
+
+    os.makedirs('output', exist_ok=True)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(x)
+    o3d.io.write_point_cloud("output/toy_3d_pts.ply", pcd)
+    
     dataset = Dataset(x)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
     
