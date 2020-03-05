@@ -88,4 +88,4 @@ if __name__ == '__main__':
             print(loss)
 
     os.makedirs('models', exist_ok=True)
-    torch.save(net.state_dict(), 'models/model.pth')
+    torch.save(net.state_dict(), 'models/toy_3d_model.pth')

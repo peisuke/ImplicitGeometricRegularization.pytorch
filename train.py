@@ -72,8 +72,8 @@ def predict(centers, device, threshold=0.4):
     pts = pts[mat.min(axis=1) < threshold]
     
     net.eval()
-    val = net(torch.Tensor(pts))
-    val = val.reshape(-1).detach().numpy()
+    val = net(torch.Tensor(pts).to(device))
+    val = val.reshape(-1).detach().cpu().numpy()
 
     return pts, val
     
