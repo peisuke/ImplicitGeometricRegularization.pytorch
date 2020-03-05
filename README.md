@@ -8,4 +8,4 @@ The paper link is [here](https://arxiv.org/abs/2002.10099)
 ![image](https://user-images.githubusercontent.com/14243883/75771026-781a1000-5d8c-11ea-9bf2-cf1557e8f058.png)
 
 ## 3D toy example
-![image](https://user-images.githubusercontent.com/14243883/75977066-f4445d00-5f1e-11ea-872f-b18c51516e94.png)
+![image](https://user-images.githubusercontent.com/14243883/75977456-cf9cb500-5f1f-11ea-9388-a767365681f5.png)
