@@ -1,4 +1,4 @@
-import torch
+i/2bmport torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -22,7 +22,7 @@ class Network(nn.Module):
 
 class NetworkLarge(nn.Module):
     def __init__(self, input_dim):
-        super(Network, self).__init__()
+        super(NetworkLarge, self).__init__()
         self.l1 = nn.Linear(input_dim, 512)
         self.l2 = nn.Linear(512, 512)
         self.l3 = nn.Linear(512, 512)

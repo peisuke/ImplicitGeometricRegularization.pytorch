@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 from dataset import Dataset
-from network import Network
+from network import NetworkLarge as Network
 
 def load_data(filename, noise=0.0):
     pcd = o3d.io.read_point_cloud(filename)
@@ -79,16 +79,18 @@ if __name__ == '__main__':
     o3d.io.write_point_cloud("output/bunny_pts.ply", pcd)
     
     dataset = Dataset(x)
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024, shuffle=True)
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
     
     net = Network(input_dim=3)
     net.to(device)
 
     optimizer = optim.Adam(net.parameters())
 
+    os.makedirs('models', exist_ok=True)
     for itr in range(5000):
         loss = train(net, optimizer, data_loader, device)
         print(loss)
+        if itr % 100 == 0:
+            torch.save(net.state_dict(), 'models/bunny_model_{0:04d}.pth'.format(itr))
 
-    os.makedirs('models', exist_ok=True)
     torch.save(net.state_dict(), 'models/bunny_model.pth')
