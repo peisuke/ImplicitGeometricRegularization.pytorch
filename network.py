@@ -1,4 +1,4 @@
-i/2bmport torch
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -30,7 +30,7 @@ class NetworkLarge(nn.Module):
         self.l5 = nn.Linear(512, 512)
         self.l6 = nn.Linear(512, 512)
         self.l7 = nn.Linear(512, 512)
-        self.l8 = nn.Linear(512, 1)
+        self.l_out = nn.Linear(512, 1)
 
     def forward(self, x):
         h = F.softplus(self.l1(x))
@@ -41,5 +41,5 @@ class NetworkLarge(nn.Module):
         h = F.softplus(self.l5(h))
         h = F.softplus(self.l6(h))
         h = F.softplus(self.l7(h))
-        h = self.l8(h)
+        h = self.l_out(h)
         return h

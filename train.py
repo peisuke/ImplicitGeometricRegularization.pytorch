@@ -79,17 +79,24 @@ if __name__ == '__main__':
     o3d.io.write_point_cloud("output/bunny_pts.ply", pcd)
     
     dataset = Dataset(x)
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=1024, shuffle=True)
     
     net = Network(input_dim=3)
+    for k, v in net.named_parameters():
+        if 'weight' in k:
+            std = np.sqrt(np.pi) / np.sqrt(v.shape[0])
+            nn.init.normal_(v, 0.0, std)
+        if k == 'l_out.bias':
+            nn.init.constant_(v, -1)
+
     net.to(device)
 
-    optimizer = optim.Adam(net.parameters())
+    optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
     os.makedirs('models', exist_ok=True)
     for itr in range(5000):
         loss = train(net, optimizer, data_loader, device)
-        print(loss)
+        print(itr, loss)
         if itr % 100 == 0:
             torch.save(net.state_dict(), 'models/bunny_model_{0:04d}.pth'.format(itr))
 
