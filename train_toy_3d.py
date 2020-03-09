@@ -30,8 +30,7 @@ def generate_data(nb_data=2048, noise=0.0):
     return pts
 
 def sample_fake(pts, noise=0.3):
-    sampled = pts.detach().numpy()
-    sampled += np.random.randn(*sampled.shape) * noise
+    sampled = pts + torch.normal(0, 1, pts.shape) * noise.unsqueeze(1)
     return sampled
 
 def train(net, optimizer, data_loader, device):
@@ -40,14 +39,18 @@ def train(net, optimizer, data_loader, device):
     total_loss = 0
     total_count = 0
     for batch in data_loader:
-        batchsize = batch.shape[0]
+        pts = batch[0]
+        rad = batch[1]
+        batchsize = pts.shape[0]
         
         net.zero_grad()
        
-        fake = torch.Tensor(sample_fake(batch, 0.1))
+        fake = torch.Tensor(sample_fake(pts, rad)) 
+        uniform = 3 * torch.rand_like(fake) - 1.5
+        fake = torch.cat((fake, uniform), axis=0)
 
-        batch = batch.to(device)
-        y = net(batch)
+        pts = pts.to(device)
+        y = net(pts)
         loss_pts = (y ** 2).sum()
         
         xv = autograd.Variable(fake, requires_grad=True)
@@ -58,7 +61,7 @@ def train(net, optimizer, data_loader, device):
                         create_graph=True, retain_graph=True, only_inputs=True)[0]
         eikonal_term = ((g.norm(2, dim=1) - 1) ** 2).mean()
         
-        loss = loss_pts + eikonal_term
+        loss = loss_pts + 0.1 * eikonal_term
         
         total_loss += loss.item()
         total_count += batchsize
@@ -75,12 +78,16 @@ if __name__ == '__main__':
 
     x = generate_data(nb_data=2048, noise=0.01)
 
+    tree = spatial.KDTree(x)
+    dists, indices = tree.query(x, k=11)
+    radius = dists[:,-1]
+
     os.makedirs('output', exist_ok=True)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(x)
     o3d.io.write_point_cloud("output/toy_3d_pts.ply", pcd)
     
-    dataset = Dataset(x)
+    dataset = Dataset(x, radius)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
     
     net = Network(input_dim=3)

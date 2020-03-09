@@ -12,11 +12,11 @@ class Network(nn.Module):
         self.l5 = nn.Linear(128, 1)
 
     def forward(self, x):
-        h = F.softplus(self.l1(x))
-        h = F.softplus(self.l2(h))
+        h = F.softplus(self.l1(x), beta=100)
+        h = F.softplus(self.l2(h), beta=100)
         h = torch.cat((h, x), axis=1)
-        h = F.softplus(self.l3(h))
-        h = F.softplus(self.l4(h))
+        h = F.softplus(self.l3(h), beta=100)
+        h = F.softplus(self.l4(h), beta=100)
         h = self.l5(h)
         return h
 
