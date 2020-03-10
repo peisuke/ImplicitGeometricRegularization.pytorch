@@ -36,7 +36,7 @@ if __name__ == '__main__':
     pts, val = predict(net)
     volume = val.reshape(32, 32, 32)
     
-    verts, faces, normals, values = measure.marching_cubes_lewiner(volume)
+    verts, faces, normals, values = measure.marching_cubes_lewiner(volume, 0.0)
     
     mesh = o3d.geometry.TriangleMesh()
     
