@@ -43,11 +43,11 @@ if __name__ == '__main__':
     net.to(device)
     net.load_state_dict(torch.load('./models/bunny_model.pth', map_location=device))
 
-    nb_grid = 512
+    nb_grid = 128
     pts, val = predict(net, device, nb_grid)
     volume = val.reshape(nb_grid, nb_grid, nb_grid)
     
-    verts, faces, normals, values = measure.marching_cubes_lewiner(volume)
+    verts, faces, normals, values = measure.marching_cubes_lewiner(volume, 0.0)
     
     mesh = o3d.geometry.TriangleMesh()
     
