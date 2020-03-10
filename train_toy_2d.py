@@ -4,6 +4,7 @@ from scipy import spatial
 
 import torch
 import torch.autograd as autograd
+import torch.nn as nn
 import torch.optim as optim
 
 import matplotlib.pyplot as plt
@@ -19,8 +20,7 @@ def generate_data(nb_data=128, noise=0.0):
     return pts
 
 def sample_fake(pts, noise=0.3):
-    sampled = pts.detach().numpy()
-    sampled += np.random.randn(*sampled.shape) * noise
+    sampled = pts + torch.normal(0, 1, pts.shape) * noise.unsqueeze(1)
     return sampled
 
 def train(net, optimizer, data_loader, device):
@@ -29,15 +29,16 @@ def train(net, optimizer, data_loader, device):
     total_loss = 0
     total_count = 0
     for batch in data_loader:
-        batchsize = batch.shape[0]
+        pts = batch[0]
+        rad = batch[1]
+        batchsize = pts.shape[0]
         
         net.zero_grad()
        
-        fake = torch.Tensor(sample_fake(batch, 0.1))
-        #fake = torch.randn(batch.shape) * 4 - 2
+        fake = 3 * torch.rand_like(pts) - 1.5
 
-        batch = batch.to(device)
-        y = net(batch)
+        pts = pts.to(device)
+        y = net(pts)
         loss_pts = (y ** 2).sum()
         
         xv = autograd.Variable(fake, requires_grad=True)
@@ -48,7 +49,7 @@ def train(net, optimizer, data_loader, device):
                         create_graph=True, retain_graph=True, only_inputs=True)[0]
         eikonal_term = ((g.norm(2, dim=1) - 1) ** 2).mean()
         
-        loss = loss_pts + eikonal_term
+        loss = loss_pts + 0.1 * eikonal_term
         
         total_loss += loss.item()
         total_count += batchsize
@@ -68,9 +69,6 @@ def predict(centers, device, threshold=0.4):
     Y = Y.reshape(-1)
     pts = np.stack((X, Y), axis=1)
 
-    mat = spatial.distance_matrix(pts, centers)
-    pts = pts[mat.min(axis=1) < threshold]
-    
     net.eval()
     val = net(torch.Tensor(pts).to(device))
     val = val.reshape(-1).detach().cpu().numpy()
@@ -96,7 +94,12 @@ if __name__ == '__main__':
     device = torch.device("cuda" if use_cuda else "cpu")
 
     x = generate_data(nb_data=128, noise=0.01)
-    dataset = Dataset(x)
+
+    tree = spatial.KDTree(x)
+    dists, indices = tree.query(x, k=11)
+    radius = dists[:,-1]
+
+    dataset = Dataset(x, radius)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     
     net = Network(input_dim=2)
