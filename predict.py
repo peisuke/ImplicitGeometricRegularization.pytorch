@@ -47,7 +47,7 @@ if __name__ == '__main__':
     pts, val = predict(net, device, nb_grid)
     volume = val.reshape(nb_grid, nb_grid, nb_grid)
     
-    verts, faces, normals, values = measure.marching_cubes_lewiner(volume, 0.0)
+    verts, faces, normals, values = measure.marching_cubes_lewiner(volume, 0.0, spacing=(1.0, -1.0, 1.0), gradient_direction='ascent')
     
     mesh = o3d.geometry.TriangleMesh()
     
