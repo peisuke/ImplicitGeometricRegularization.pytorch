@@ -24,7 +24,7 @@ python predict_toy_3d.py
 ## Stanford Bunny
 
 ```
-python train.py -i [path to file] -e 1000
+python train.py --input [path to file] --epochs 5000
 python predict.py
 ```
 
