@@ -4,7 +4,7 @@ import torch
 import torch.autograd as autograd
 import torch.nn as nn
 
-from network import NetworkLarge as Network
+from network import Network
 
 def sample_fake(pts, noise=0.3):
     sampled = pts + torch.normal(0, 1, pts.shape) * noise.unsqueeze(1)
