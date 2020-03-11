@@ -10,7 +10,7 @@ The paper link is [here](https://arxiv.org/abs/2002.10099)
 python train_toy_2d.py
 ```
 
-![image](https://user-images.githubusercontent.com/14243883/75771026-781a1000-5d8c-11ea-9bf2-cf1557e8f058.png)
+![image](https://user-images.githubusercontent.com/14243883/76383267-9ee4d180-639e-11ea-994f-4d24f3a4a574.png)
 
 ## 3D toy example
 
@@ -24,7 +24,7 @@ python predict_toy_3d.py
 ## Stanford Bunny
 
 ```
-python train.py
+python train.py -i [path to file] -e 1000
 python predict.py
 ```
 
