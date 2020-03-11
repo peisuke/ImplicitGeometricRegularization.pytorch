@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from network import NetworkLarge as Network
+from utils import build_network
 
 def predict(net, device, nb_grid):
     x = np.linspace(-1.5, 1.5, nb_grid)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    net = Network(input_dim=3)
+    net = build_network(input_dim=3)
     net.to(device)
     net.load_state_dict(torch.load('./models/{}_model.pth'.format(name), map_location=device))
 
