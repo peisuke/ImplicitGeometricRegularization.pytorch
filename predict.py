@@ -1,5 +1,6 @@
 import os
 import random
+import argparse
 import numpy as np
 import colorsys
 from skimage import measure
@@ -36,12 +37,18 @@ def predict(net, device, nb_grid):
     return pts, val
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--name', '-n', type=str, default='output', help='output model name')
+
+    args = parser.parse_args()
+    name = args.name
+    
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
     net = Network(input_dim=3)
     net.to(device)
-    net.load_state_dict(torch.load('./models/bunny_model.pth', map_location=device))
+    net.load_state_dict(torch.load('./models/{}_model.pth'.format(name), map_location=device))
 
     nb_grid = 128
     pts, val = predict(net, device, nb_grid)
@@ -56,4 +63,4 @@ if __name__ == '__main__':
     mesh.triangle_normals = o3d.utility.Vector3dVector(normals)
 
     os.makedirs('output', exist_ok=True)
-    o3d.io.write_triangle_mesh("output/bunny_mesh.ply", mesh)
+    o3d.io.write_triangle_mesh("output/{}_mesh.ply".format(name), mesh)

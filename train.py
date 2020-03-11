@@ -1,3 +1,4 @@
+import argparse
 import os
 import random
 import numpy as np
@@ -71,16 +72,24 @@ def train(net, optimizer, data_loader, device):
     return total_loss
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--input', '-i', type=str, required=True, help='input filename (pcd, ply)')
+    parser.add_argument('--name', '-n', type=str, default='output', help='output model name')
+
+    args = parser.parse_args()
+    input_path = args.input
+    output_name = args.name
+
     use_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if use_cuda else "cpu")
 
-    x = load_data('data/bunny/reconstruction/bun_zipper.ply')
-
+    x = load_data(input_path)
+    
     os.makedirs('output', exist_ok=True)
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(x)
-    o3d.io.write_point_cloud("output/bunny_pts.ply", pcd)
-   
+    o3d.io.write_point_cloud("output/{}_pts.ply".format(output_name), pcd)
+    
     tree = spatial.KDTree(x)
     dists, indices = tree.query(x, k=51)
     radius = dists[:,-1]
@@ -105,10 +114,13 @@ if __name__ == '__main__':
     optimizer = optim.Adam(net.parameters(), lr=0.0001)
 
     os.makedirs('models', exist_ok=True)
-    for itr in range(5000):
+    for itr in range(300):
         loss = train(net, optimizer, data_loader, device)
         print(itr, loss)
         if itr % 100 == 0:
-            torch.save(net.state_dict(), 'models/bunny_model_{0:04d}.pth'.format(itr))
+            torch.save(net.state_dict(), 'models/model_{0:04d}.pth'.format(itr))
 
-    torch.save(net.state_dict(), 'models/bunny_model.pth')
+    #torch.save(net.state_dict(), 'models/bunny_model.pth')
+    torch.save(net.state_dict(), 'models/{}_model.pth'.format(output_name))
+
+     
