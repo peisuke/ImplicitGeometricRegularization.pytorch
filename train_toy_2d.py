@@ -1,64 +1,22 @@
 import random
 import numpy as np
-from scipy import spatial
 
 import torch
-import torch.autograd as autograd
-import torch.nn as nn
 import torch.optim as optim
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 from dataset import Dataset
-from network import Network
+from utils import sample_fake
+from utils import build_network
+from utils import train
 
 def generate_data(nb_data=128, noise=0.0):
     t = 2 * np.random.rand(nb_data) * np.pi
     r = 1.0 + np.random.randn(nb_data) * noise
     pts = np.stack((r * np.cos(t), r * np.sin(t)), axis=1)
     return pts
-
-def sample_fake(pts, noise=0.3):
-    sampled = pts + torch.normal(0, 1, pts.shape) * noise.unsqueeze(1)
-    return sampled
-
-def train(net, optimizer, data_loader, device):
-    net.train()
-
-    total_loss = 0
-    total_count = 0
-    for batch in data_loader:
-        pts = batch[0]
-        rad = batch[1]
-        batchsize = pts.shape[0]
-        
-        net.zero_grad()
-       
-        fake = 3 * torch.rand_like(pts) - 1.5
-
-        pts = pts.to(device)
-        y = net(pts)
-        loss_pts = (y ** 2).sum()
-        
-        xv = autograd.Variable(fake, requires_grad=True)
-        xv = xv.to(device)
-        f = net(xv)
-        g = autograd.grad(outputs=f, inputs=xv,
-                        grad_outputs=torch.ones(f.size()).to(device),
-                        create_graph=True, retain_graph=True, only_inputs=True)[0]
-        eikonal_term = ((g.norm(2, dim=1) - 1) ** 2).mean()
-        
-        loss = loss_pts + 0.1 * eikonal_term
-        
-        total_loss += loss.item()
-        total_count += batchsize
-
-        loss.backward()
-        optimizer.step()
-
-    total_loss /= total_count
-    return total_loss
 
 def predict(centers, device, threshold=0.4):
     x = np.linspace(-1.5, 1.5, 40)
@@ -95,14 +53,10 @@ if __name__ == '__main__':
 
     x = generate_data(nb_data=128, noise=0.01)
 
-    tree = spatial.KDTree(x)
-    dists, indices = tree.query(x, k=11)
-    radius = dists[:,-1]
-
-    dataset = Dataset(x, radius)
+    dataset = Dataset(x, knn=10)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=8, shuffle=True)
     
-    net = Network(input_dim=2)
+    net = build_network(input_dim=2)
     net.to(device)
 
     optimizer = optim.Adam(net.parameters())
