@@ -22,11 +22,27 @@ def load_data(filename, noise=0.0):
     pts -= (pts.max(axis=0) + pts.min(axis=0)) / 2
     return pts
 
+
+def get_batchsize(iter):
+    scheduler = [
+        {'epoch': 10, 'batch_size': 32}, 
+        {'epoch': 20, 'batch_size': 64}, 
+        {'epoch': 30, 'batch_size': 128}, 
+        {'epoch': 40, 'batch_size': 256}, 
+        {'epoch': 50, 'batch_size': 512}, 
+        {'epoch': 100, 'batch_size': 1024}
+    ]
+    for s in scheduler:
+        if iter < s['epoch']:
+            return s['batch_size']
+    return 2048
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('--input', '-i', type=str, required=True, help='input filename (pcd, ply)')
     parser.add_argument('--name', '-n', type=str, default='output', help='output model name')
     parser.add_argument('--epochs', '-e', type=int, default=100, help='output model name')
+    parser.add_argument('--fast', action='store_true', help='batch size scheduling')
 
     args = parser.parse_args()
     input_path = args.input
@@ -53,6 +69,11 @@ if __name__ == '__main__':
 
     os.makedirs('models', exist_ok=True)
     for itr in range(nb_epochs):
+        if args.fast:
+            batch_size = get_batchsize(itr)
+            if batch_size != data_loader.batch_size:
+                data_loader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
+
         loss = train(net, optimizer, data_loader, device)
         print(itr, loss)
         if itr % 100 == 0:
