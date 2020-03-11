@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from network import Network
+from utils import build_network
 
 def predict(net):
     x = np.linspace(-1.5, 1.5, 32)
@@ -30,7 +31,7 @@ def predict(net):
     return pts, val
 
 if __name__ == '__main__':
-    net = Network(input_dim=3)
+    net = build_network(input_dim=3)
     net.load_state_dict(torch.load('./models/toy_3d_model.pth', map_location='cpu'))
     
     pts, val = predict(net)
